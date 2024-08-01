@@ -14,7 +14,7 @@ def FetchOptionChainFromNSE(symbol: str, index: bool, session: requests.Session,
     try:
         url = f"https://www.nseindia.com/api/option-chain-indices?symbol={symbol}" if index else f"https://www.nseindia.com/api/option-chain-equities?symbol={symbol}"
         response = session.get(url, headers=headers)
-        response.raise_for_status() 
+        response.raise_for_status()  # Ensure we raise an exception for HTTP errors
         return response.json().get('records', {})
     except HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
@@ -37,7 +37,7 @@ def round_features(df: pd.DataFrame, decimal_places: int = 2) -> pd.DataFrame:
     df[numeric_columns] = df[numeric_columns].round(decimal_places)
     return df
 
-def GetFeatures(df: pd.DataFrame, src_data: pd.DataFrame) -> pd.DataFrame:
+def GetFeatures(df: pd.DataFrame, src_data: pd.DataFrame, underlying_value: float) -> pd.DataFrame:
     ce_data = GetOptionChainCEData(src_data)
     pe_data = GetOptionChainPEData(src_data)
     
@@ -65,7 +65,9 @@ def GetFeatures(df: pd.DataFrame, src_data: pd.DataFrame) -> pd.DataFrame:
     df["PE_ASK_QTY"] = pe_data['askQty']
     df["PE_ASK_PRICE"] = pe_data['askPrice']
     
-    return round_features(df) 
+    df["underlyingValue"] = underlying_value
+    
+    return round_features(df)  # Round the features before returning
 
 def GetExpiryDates(symbol: str, index: bool, session: requests.Session, headers: dict) -> list:
     option_chain_record = FetchOptionChainFromNSE(symbol=symbol, index=index, session=session, headers=headers)
@@ -83,7 +85,8 @@ def GetOptionChain(symbol: str, expiry: str, index: bool, session: requests.Sess
     option_chain_data_df = option_chain_data_df[option_chain_data_df.expiryDate == expiry]
 
     option_chain = pd.DataFrame()
-    return GetFeatures(df=option_chain, src_data=option_chain_data_df)
+    underlying_value = option_chain_record.get('underlyingValue', 0.0)
+    return GetFeatures(df=option_chain, src_data=option_chain_data_df, underlying_value=underlying_value)
 
 def write_to_csv(data: pd.DataFrame, file_path: str, columns: list) -> None:
     file_exists = os.path.exists(file_path)
@@ -103,7 +106,6 @@ def run(file_path: str, symbol: str, index: bool, expiry: str, columns: list, se
     OptionChain_NIFTY['TimeStamp'] = time_now
     print("Updating CSV...")
     write_to_csv(OptionChain_NIFTY, file_path, columns)
-    print("CSV Updated")
     print_hr()
     print()
 
@@ -136,7 +138,7 @@ def main():
         'CE_BID_QTY', 'CE_BID_PRICE', 'CE_ASK_QTY', 'CE_ASK_PRICE',
         'strikePrice', 'PE_OI', 'PE_CHNG_IN_OI', 'PE_VOLUME', 'PE_IV', 'PE_LTP',
         'PE_CHNG', 'PE_BID_QTY', 'PE_BID_PRICE', 'PE_ASK_QTY', 'PE_ASK_PRICE',
-        'TimeStamp'
+        'underlyingValue', 'TimeStamp'
     ]
 
     if not os.path.exists(file_path):
@@ -147,15 +149,13 @@ def main():
     while True:
         try:
             run(file_path, symbol, index, expiry, columns, session, headers)
-            print("Waiting...")
             time.sleep(120)
         except KeyboardInterrupt:
             print("Process interrupted by user.")
-            print_hr()
             sys.exit()
         except Exception as e:
             print(f"An error occurred: {e}")
-            time.sleep(15)  # Wait before retrying
+            time.sleep(60)  # Wait before retrying
 
 if __name__ == "__main__":
     main()
