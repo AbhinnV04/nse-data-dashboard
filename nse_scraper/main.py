@@ -19,7 +19,7 @@ def GetExpiryDates(symbol: str, index: bool, session: requests.Session, headers:
         return response  
     else:
         print("Failed to fetch expiry dates")
-        return ["14-Aug-2024"]
+        return ["14-Aug-2024"] # change return value here
 
 def GetOptionChain(symbol: str, expiry: str, index: bool, session: requests.Session, headers: dict) -> pd.DataFrame:
     option_chain_record = FetchOptionChainFromNSE(symbol=symbol, index=index, session=session, headers=headers)
