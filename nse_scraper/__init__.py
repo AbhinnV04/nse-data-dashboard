@@ -1,4 +1,8 @@
-from .data_fetcher import FetchOptionChainFromNSE, GetExpiryDates
-from .data_processor import GetFeatures, GetColumnNames
-from .utils import write_to_csv, initialize_csv_file
-from .session_manager import create_session, fetch_page
+# nse_scraper/__init__.py
+
+from .session_manager import fetch_option_chain
+from .data_processor import get_column_names, get_features, update_column_names, add_filters
+
+# Metadata 
+__version__ = "0.1.0"
+__author__ = "Abhinn Verma"

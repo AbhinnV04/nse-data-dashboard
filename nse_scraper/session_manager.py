@@ -1,26 +1,39 @@
 import requests
-import logging
+import time
+import pandas as pd
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-def create_session():
+def create_session() -> requests.Session:
     session = requests.Session()
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36',
-        'accept-language': 'en,gu;q=0.9,hi;q=0.8',
+    session.headers.update({
+        'user-agent': 'Mozilla/5.0',
+        'accept-language': 'en',
         'accept-encoding': 'gzip, deflate, br'
-    }
-    session.headers.update(headers)
+    })
     return session
 
-def fetch_page(url: str, session: requests.Session) -> requests.Response:
+def fetch_data(url: str, session: requests.Session, retries: int = 5) -> dict:
+    for attempt in range(retries):
+        try:
+            response = session.get(url)
+            response.raise_for_status()
+            return response.json()  # Convert response to JSON
+        except requests.RequestException as e:
+            if attempt < retries - 1:
+                time.sleep(1)  # Wait before retrying
+                continue
+            else:
+                raise e
+
+def fetch_option_chain(symbol: str) -> (pd.DataFrame, list):
+    session = create_session()
+    url = f"https://www.nseindia.com/api/option-chain-indices?symbol={symbol}" 
     try:
-        response = session.get(url)
-        response.raise_for_status()  # Raise HTTPError for bad responses (4xx and 5xx)
-        return response
-    except requests.HTTPError as http_err:
-        logging.error(f"HTTP error occurred: {http_err}")
-        raise
-    except requests.RequestException as req_err:
-        logging.error(f"Request error occurred: {req_err}")
-        raise
+        data = fetch_data(url, session)
+        expiry_dates = data.get('records', {}).get('expiryDates', [])
+        option_chain_data = data.get('records', {}).get('data', [])
+        option_chain_df = pd.DataFrame(option_chain_data)
+        return option_chain_df, expiry_dates[:3]  # Returning only 3 options for expiry dates
+    except Exception as e:
+        print(f"Error fetching option chain data: {e}")
+        return pd.DataFrame(), ["14-Aug-2099"]  # Default date in case of error
+
