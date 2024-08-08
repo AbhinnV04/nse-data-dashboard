@@ -36,12 +36,8 @@ def get_features(src_data) -> pd.DataFrame:
     pe_data = get_pe_data(src_data)
     
     df = pd.DataFrame()
-    now = datetime.now()
+    df["SPOT_PRICE"] = ce_data['underlyingValue']
     
-    df["Time"] = now.strftime('%H:%M')
-    df["Date"] = now.strftime('%Y-%m-%d')
-    df["SPOT_PRICE"] = ce_data['underlyingValue'] # we can use either CE or PE both contain the same underlying value
-
     df["CE_OI"] = ce_data['openInterest']
     df["CE_CHNG_IN_OI"] = ce_data['changeinOpenInterest']
     df["CE_VOLUME"] = ce_data['totalTradedVolume']
@@ -65,16 +61,14 @@ def get_features(src_data) -> pd.DataFrame:
     df["PE_BID_PRICE"] = pe_data['bidprice']
     df["PE_ASK_QTY"] = pe_data['askQty']
     df["PE_ASK_PRICE"] = pe_data['askPrice']
-
+    df["expiryDate"] = pe_data["expiryDate"]
     df = round_features(df)
     df = calculate_deltas(df)
-
-    # column_names = get_column_names()
+    
     return df
 
 def update_column_names(df) -> pd.DataFrame:
     pass
-
 
 def add_filters(df, expiry, strike_price, time_delay) -> (pd.DataFrame, range):
     underlying_price = round(df["SPOT_PRICE"])

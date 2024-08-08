@@ -1,6 +1,6 @@
 # nse_scraper/__init__.py
 
-from .session_manager import fetch_option_chain
+from .session_manager import fetch_option_chain, fetch_expiry_and_strikePrice
 from .data_processor import get_column_names, get_features, update_column_names, add_filters
 
 # Metadata 

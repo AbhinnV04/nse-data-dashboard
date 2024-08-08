@@ -66,5 +66,9 @@ env.bak/
 *.tmp
 *.bak
 
+# Misc files
+tester.ipynb
+To_add.txt
+
 # Sphinx documentation
 docs/_build/

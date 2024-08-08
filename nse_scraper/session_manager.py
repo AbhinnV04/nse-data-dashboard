@@ -32,8 +32,17 @@ def fetch_option_chain(symbol: str) -> (pd.DataFrame, list):
         expiry_dates = data.get('records', {}).get('expiryDates', [])
         option_chain_data = data.get('records', {}).get('data', [])
         option_chain_df = pd.DataFrame(option_chain_data)
-        return option_chain_df, expiry_dates[:3]  # Returning only 3 options for expiry dates
+        return option_chain_df, expiry_dates
     except Exception as e:
         print(f"Error fetching option chain data: {e}")
         return pd.DataFrame(), ["14-Aug-2099"]  # Default date in case of error
 
+
+def fetch_expiry_and_strikePrice(symbol: str) -> [list, list]:
+    session = create_session()
+    url = f"https://www.nseindia.com/api/option-chain-indices?symbol={symbol}" 
+    data = fetch_data(url, session)
+    expiry_dates = data.get('records', {}).get('expiryDates', [])
+    option_chain_data = data.get('records', {}).get('data', [])
+    option_chain_df = pd.DataFrame(option_chain_data)
+    return option_chain_df['strikePrice'].unique(), expiry_dates
