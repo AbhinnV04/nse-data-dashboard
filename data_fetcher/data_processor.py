@@ -17,9 +17,6 @@ def calculate_deltas(df) -> pd.DataFrame:
     df["PCR"] = df["PE_OI"] / df["CE_OI"]
     return df
 
-# YET TO IMPLEMENT
-def get_column_names() -> list:
-    return []
 
 def get_ce_data(option_chain_data_df) -> pd.DataFrame:
     option_chain_ce = pd.DataFrame()
@@ -32,6 +29,10 @@ def get_pe_data(option_chain_data_df) -> pd.DataFrame:
     return pd.concat([option_chain_pe.drop('PE', axis=1), option_chain_pe['PE'].apply(pd.Series)], axis=1)
 
 def get_features(src_data) -> pd.DataFrame:
+    if src_data.empty:
+        print("No data available for processing.")
+        return pd.DataFrame()  
+    
     ce_data = get_ce_data(src_data)
     pe_data = get_pe_data(src_data)
     
@@ -65,14 +66,6 @@ def get_features(src_data) -> pd.DataFrame:
     df = round_features(df)
     df = calculate_deltas(df)
     
+    df["DateTime"] = datetime.now().strftime("%H:%M")
     return df
 
-def update_column_names(df) -> pd.DataFrame:
-    pass
-
-def add_filters(df, expiry, strike_price, time_delay) -> (pd.DataFrame, range):
-    underlying_price = round(df["SPOT_PRICE"])
-    
-    # df_filtered = update_column_names(df)
-    strike_price_range = range((underlying_price) - 300, )
-    return df_filtered

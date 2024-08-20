@@ -50,6 +50,7 @@ env.bak/
 *.venv
 *.virtualenv
 .env/
+*.db
 
 # Logs
 *.log
