@@ -61,7 +61,7 @@ scheduler.add_job(
 scheduler.init_app(app)
 scheduler.start()
 
-if __nam.e__ == '__main__':
+if __name__ == '__main__':
     try:
         app.run(debug=False)
     except (KeyboardInterrupt, SystemExit):

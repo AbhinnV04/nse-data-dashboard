@@ -11,11 +11,13 @@ def round_features(df) -> pd.DataFrame:
     })
     return df
 
+
 def calculate_deltas(df) -> pd.DataFrame:
-    df["CE_Delta"] = df["CE_CHNG_IN_OI"].diff(-1)
-    df["PE_Delta"] = df["PE_CHNG_IN_OI"].diff(-1)
-    df["PCR"] = df["PE_OI"] / df["CE_OI"]
+    df["CE_Delta"] = df.groupby("expiryDate")["CE_CHNG_IN_OI"].diff(-1)
+    df["PE_Delta"] = df.groupby("expiryDate")["PE_CHNG_IN_OI"].diff(-1)
+    df["PCR"] = df.groupby("expiryDate").apply(lambda x: x["PE_OI"] / x["CE_OI"]).reset_index(drop=True)
     return df
+
 
 
 def get_ce_data(option_chain_data_df) -> pd.DataFrame:
